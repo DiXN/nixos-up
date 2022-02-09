@@ -111,9 +111,9 @@ def ask_proceed():
 ask_proceed()
 print()
 
-print("Ok, will begin installing in 10 seconds. Press Ctrl-C to cancel.\n")
+print("Ok, will begin installing in 5 seconds. Press Ctrl-C to cancel.\n")
 sys.stdout.flush()
-time.sleep(10)
+time.sleep(5)
 
 def run(args):
   print(f">>> {' '.join(args)}")
