@@ -274,10 +274,12 @@ config = re.sub(r"# time\.timeZone = .*$", f"time.timeZone = \"{timezone}\";", c
 
 # Find network device
 ps = subprocess.run(['ip', 'addr'], check=True, capture_output=True)
-network_device = subprocess.run(['awk', "'/enp.*/{ print substr($2, 1, length($2) - 1); exit }'"],
+process_output = subprocess.run(['awk', "/enp.*/{ print substr($2, 1, length($2) - 1); exit }"],
                               input=ps.stdout, capture_output=True)
 
-config.replace("networking.interfaces.enp0s3.useDHCP = true;", f"networking.interfaces.{network_device}.useDHCP = true;")
+network_device = process_output.stdout.decode('ascii').strip()
+
+config = config.replace("networking.interfaces.enp0s3.useDHCP = true;", f"networking.interfaces.{network_device}.useDHCP = true;")
 
 with open(config_path, "w") as f:
   f.write(config)
