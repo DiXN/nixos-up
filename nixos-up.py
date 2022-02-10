@@ -56,21 +56,6 @@ def ask_disk() -> int:
 selected_disk = ask_disk()
 print()
 
-def ask_graphical() -> bool:
-  sel = input("""Will this be a desktop/graphical install? Ie, do you have a
-    monitor (y) or is this a server (n)? [Yn] """).lower()
-
-  if sel == "" or sel == "y":
-    return True
-  elif sel == "n":
-    return False
-  else:
-    print("Input must be 'y' (yes) or 'n' (no).\n")
-    return ask_graphical()
-
-graphical = ask_graphical()
-print()
-
 def ask_username() -> str:
   sel = input("What would you like your username to be? ")
   if re.fullmatch(r"^[a-z_][a-z0-9_-]*[\$]?$", sel):
@@ -197,6 +182,8 @@ if efi:
 ### Generate config
 run(["nixos-generate-config", "--root", "/mnt"])
 
+run(["curl", "-L", "https://raw.githubusercontent.com/DiXN/nixos-up/main/configuration.nix", "-o" "/mnt/etc/nixos/configuration.nix"])
+
 config_path = "/mnt/etc/nixos/configuration.nix"
 with open(config_path, "r") as f:
   config = f.read()
@@ -232,7 +219,7 @@ config = re.sub(r"imports =\s*\[", """imports = [ "${home-manager}/nixos" \n""",
 
 # Non-EFI systems require boot.loader.grub.device to be specified.
 if not efi:
-  config = config.replace("boot.loader.grub.version = 2;", f"boot.loader.grub.version = 2;\n  boot.loader.grub.device = \"/dev/{selected_disk_name}\";\n")
+  config = config.replace("boot.loader.grub.device = \"nodev\";", f"boot.loader.grub.device = \"/dev/{selected_disk_name}\";\n")
 
 # Declarative user management
 # Using `passwordFile` is a little bit more secure than `hashedPassword` since
@@ -245,7 +232,7 @@ with open(password_file_path, "w") as f:
 os.chmod(password_file_path, 600)
 
 # We do our best here to match against the commented out users block.
-config = re.sub(r" *# Define a user account\..*\n( *# .*\n)+", "\n".join([
+config = re.sub(r" *# Define a user account\..*\n( *#? .*\n)+", "\n".join([
   "  users.mutableUsers = false;",
   f"  users.users.{username} = {{",
   "    isNormalUser = true;",
@@ -257,15 +244,6 @@ config = re.sub(r" *# Define a user account\..*\n( *# .*\n)+", "\n".join([
   "  users.users.root.hashedPassword = \"!\";",
   ""
 ]), config)
-
-# Graphical environment
-if graphical:
-  config = config.replace("# services.printing.enable = true;", "services.printing.enable = true;")
-  config = config.replace("# sound.enable = true;", "sound.enable = true;")
-  config = config.replace("# hardware.pulseaudio.enable = true;", "hardware.pulseaudio.enable = true;")
-  config = config.replace("# services.xserver.libinput.enable = true;", "services.xserver.libinput.enable = true;")
-  # See https://nixos.wiki/wiki/GNOME.
-  config = config.replace("# services.xserver.enable = true;", "services.xserver.enable = true;\n  services.xserver.desktopManager.gnome.enable = true;")
 
 ram_bytes = psutil.virtual_memory().total
 print(f"Detected {(ram_bytes / 1024 / 1024 / 1024):.3f} Gb of RAM...")
@@ -296,6 +274,8 @@ config = re.sub(r"# time\.timeZone = .*$", f"time.timeZone = \"{timezone}\";", c
 
 with open(config_path, "w") as f:
   f.write(config)
+
+run(["less", config_path])
 
 # Finally do the install!
 run(["nixos-install", "--no-root-passwd"])
