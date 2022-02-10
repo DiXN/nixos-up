@@ -60,6 +60,9 @@
   services.xserver.layout = "de";
   services.xserver.xkbOptions = "eurosign:e";
 
+  # Enable docker
+  virtualisation.docker.enable = true;
+
   # Enable sound.
   sound.enable = true;
   hardware.pulseaudio.enable = true;

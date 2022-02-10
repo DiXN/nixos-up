@@ -236,7 +236,7 @@ config = re.sub(r" *# Define a user account\..*\n( *#? .*\n)+", "\n".join([
   "  users.mutableUsers = false;",
   f"  users.users.{username} = {{",
   "    isNormalUser = true;",
-  "    extraGroups = [ \"wheel\" \"networkmanager\" ];",
+  "    extraGroups = [ \"wheel\" \"networkmanager\" \"docker\" ];",
   f"    passwordFile = \"/etc/passwordFile-{username}\";",
   "  };",
   "",
