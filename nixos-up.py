@@ -272,6 +272,13 @@ timezone = requests.get("http://ipinfo.io").json()["timezone"]
 print(f"Detected timezone as {timezone}...")
 config = re.sub(r"# time\.timeZone = .*$", f"time.timeZone = \"{timezone}\";", config, flags=re.MULTILINE)
 
+# Find network device
+ps = subprocess.run(['ip', 'addr'], check=True, capture_output=True)
+network_device = subprocess.run(['awk', "'/enp.*/{ print substr($2, 1, length($2) - 1); exit }'"],
+                              input=ps.stdout, capture_output=True)
+
+config.replace("networking.interfaces.enp0s3.useDHCP = true;", f"networking.interfaces.{network_device}.useDHCP = true;")
+
 with open(config_path, "w") as f:
   f.write(config)
 
